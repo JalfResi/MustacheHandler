@@ -1,6 +1,8 @@
 package mustacheHandler
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -24,7 +26,6 @@ func (h *MustacheHandler) HandleFunc(template string, handler func(http.Response
 }
 
 func (h *MustacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
 	// Capture the response
 	rec := httptest.NewRecorder()
 	h.handler.ServeHTTP(rec, r)
@@ -35,12 +36,17 @@ func (h *MustacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// grab the captured response
-	originalData := rec.Body.Bytes()
-	data := originalData
+	data := rec.Body.Bytes()
 
+	// Response content-type is json, process mustache template
 	if rec.Header().Get("Content-Type") == "application/json" {
-		// unmarshall json
-		data = mustache.Render(h.template, jsonObj)
+		var jsonData map[string]interface{}
+		err := json.Unmarshal(data, &jsonData)
+		if err != nil {
+			log.Fatal(err)
+		}
+		bd := mustache.Render(h.template, jsonData)
+		data = []byte(bd)
 	}
 
 	// But the Content-Length might have been set already,
