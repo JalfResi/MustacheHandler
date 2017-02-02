@@ -3,21 +3,29 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
+	"flag"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
-	"os"
-
-	"regexp"
-
 	"net/url"
-
-	"flag"
+	"os"
+	"regexp"
 
 	"github.com/JalfResi/mustacheHandler"
 	"github.com/JalfResi/regexphandler"
 )
+
+/*
+
+Config file is CSV file with the following structure:
+
+Guard RegExp URL, Target URL, Mustache Template
+
+e.g.
+/users/.*,https://ip-ranges.amazonaws.com/ip-ranges.json,<body><h1>Sync Token: {{syncToken}}</h1></body>
+
+*/
 
 var (
 	hostAddr = flag.String("host", "127.0.0.1:12345", "Hostname and port")
