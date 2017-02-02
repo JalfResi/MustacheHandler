@@ -47,6 +47,8 @@ func (h *MustacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		bd := mustache.Render(h.template, jsonData)
 		data = []byte(bd)
+
+		w.Header().Set("Content-Type", "text/html")
 	}
 
 	// But the Content-Length might have been set already,
