@@ -49,18 +49,13 @@ func (h *MustacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		data = []byte(bd)
 
 		w.Header().Set("Content-Type", "text/html")
-	}
 
-	// But the Content-Length might have been set already,
-	// we should modify it by adding the length
-	// of our own data.
-	// Ignoring the error is fine here:
-	// if Content-Length is empty or otherwise invalid,
-	// Atoi() will return zero,
-	// which is just what we'd want in that case.
-	clen, _ := strconv.Atoi(rec.Header().Get("Content-Length"))
-	clen += len(data)
-	w.Header().Set("Content-Length", strconv.Itoa(clen))
+		// Ignoring the error is fine here:
+		// if Content-Length is empty or otherwise invalid,
+		// Atoi() will return zero,
+		// which is just what we'd want in that case.
+		w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+	}
 
 	// write out our modified response
 	w.Write([]byte(data))
