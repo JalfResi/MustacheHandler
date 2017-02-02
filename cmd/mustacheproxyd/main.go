@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/http/httptest"
 	"net/http/httputil"
 	"os"
 
@@ -23,14 +22,6 @@ import (
 var (
 	config = flag.String("config", "", "Config CSV filename")
 )
-
-func sameHost(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.Host = r.URL.Host
-		log.Println("source: ", r.URL.String())
-		handler.ServeHTTP(w, r)
-	})
-}
 
 func main() {
 	flag.Parse()
@@ -55,46 +46,25 @@ func main() {
 			break
 		}
 
-		target, _ := url.Parse(record[1])
-		proxy := httputil.NewSingleHostReverseProxy(target)
-
-		mHandler := &mustacheHandler.MustacheHandler{}
-		mHandler.Handler(record[2], logger("reverseproxy", proxy))
-
-		re := regexp.MustCompile(record[0])
-		reHandler.Handler(re, logger("mustache", mHandler))
-	}
-	f.Close()
-
-	log.Fatal(http.ListenAndServe(":12345", logger("rehandler", sameHost(reHandler))))
-}
-
-func logger(prefix string, h http.Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// Save a copy of this request for debugging.
-		requestDump, err := httputil.DumpRequest(r, false)
-		if err != nil {
-			log.Println(err)
-		}
-		log.Println(prefix, string(requestDump))
-
-		rec := httptest.NewRecorder()
-		h.ServeHTTP(rec, r)
-
-		dump, err := httputil.DumpResponse(rec.Result(), true)
+		target, err := url.Parse(record[1])
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Println(prefix, string(dump))
 
-		// we copy the captured response headers to our new response
-		for k, v := range rec.Header() {
-			w.Header()[k] = v
+		proxy := &httputil.ReverseProxy{
+			Director: func(req *http.Request) {
+				req.Host = target.Host
+				req.URL = target
+			},
 		}
 
-		// grab the captured response body
-		data := rec.Body.Bytes()
+		mHandler := &mustacheHandler.MustacheHandler{}
+		mHandler.Handler(record[2], proxy)
 
-		w.Write([]byte(data))
+		re := regexp.MustCompile(record[0])
+		reHandler.Handler(re, mHandler)
 	}
+	f.Close()
+
+	log.Fatal(http.ListenAndServe(":12345", reHandler))
 }
