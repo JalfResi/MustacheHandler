@@ -20,7 +20,8 @@ import (
 )
 
 var (
-	config = flag.String("config", "", "Config CSV filename")
+	hostAddr = flag.String("host", "127.0.0.1:12345", "Hostname and port")
+	config   = flag.String("config", "", "Config CSV filename")
 )
 
 func main() {
@@ -66,5 +67,5 @@ func main() {
 	}
 	f.Close()
 
-	log.Fatal(http.ListenAndServe(":12345", reHandler))
+	log.Fatal(http.ListenAndServe(*hostAddr, reHandler))
 }
