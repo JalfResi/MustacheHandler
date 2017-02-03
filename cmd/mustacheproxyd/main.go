@@ -20,10 +20,15 @@ import (
 
 Config file is CSV file with the following structure:
 
-Guard RegExp URL, Target URL, Mustache Template
+Guard RegExp URL, Target URL, Mustache Template filename
 
 e.g.
-/users/.*,https://ip-ranges.amazonaws.com/ip-ranges.json,<body><h1>Sync Token: {{syncToken}}</h1></body>
+/services/(.*)/users/(.*),https://$1,example.com/users/$2,./templates/$1.mustache
+
+Results in:
+
+/services/reporter/users/ben -> https://reporter,example.com/users/ben
+./templates/reporter.mustache
 
 */
 
