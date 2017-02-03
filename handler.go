@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strconv"
 
 	"github.com/hoisie/mustache"
@@ -12,16 +13,19 @@ import (
 
 type MustacheHandler struct {
 	handler  http.Handler
+	pattern  *regexp.Regexp
 	template string
 }
 
-func (h *MustacheHandler) Handler(template string, handler http.Handler) {
+func (h *MustacheHandler) Handler(pattern *regexp.Regexp, template string, handler http.Handler) {
 	h.handler = handler
+	h.pattern = pattern
 	h.template = template
 }
 
-func (h *MustacheHandler) HandleFunc(template string, handler func(http.ResponseWriter, *http.Request)) {
+func (h *MustacheHandler) HandleFunc(pattern *regexp.Regexp, template string, handler func(http.ResponseWriter, *http.Request)) {
 	h.handler = http.HandlerFunc(handler)
+	h.pattern = pattern
 	h.template = template
 }
 
@@ -45,7 +49,9 @@ func (h *MustacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		bd := mustache.Render(h.template, jsonData)
+
+		filename := h.pattern.ReplaceAllString(r.URL.String(), h.template)
+		bd := mustache.RenderFile(filename, jsonData)
 		data = []byte(bd)
 
 		w.Header().Set("Content-Type", "text/html")
