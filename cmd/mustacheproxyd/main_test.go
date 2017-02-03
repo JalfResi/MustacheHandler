@@ -37,7 +37,12 @@ func TestHandlers(t *testing.T) {
 
 	// configure handler chain
 	target, _ := url.Parse(ts.URL)
-	proxy := httputil.NewSingleHostReverseProxy(target)
+	proxy := &httputil.ReverseProxy{
+		Director: func(req *http.Request) {
+			req.Host = target.Host
+			req.URL = target
+		},
+	}
 
 	mHandler := &mustacheHandler.MustacheHandler{}
 	mHandler.Handler("<html><body>{{message}}</body></html>", proxy)

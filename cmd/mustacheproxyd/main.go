@@ -55,13 +55,16 @@ func main() {
 			break
 		}
 
-		target, err := url.Parse(record[1])
-		if err != nil {
-			log.Fatal(err)
-		}
+		re := regexp.MustCompile(record[0])
 
 		proxy := &httputil.ReverseProxy{
 			Director: func(req *http.Request) {
+				target, err := url.Parse(re.ReplaceAllString(req.URL.String(), record[1]))
+				if err != nil {
+					log.Fatal(err)
+				}
+				log.Println(req.URL.String(), "->", target.String())
+
 				req.Host = target.Host
 				req.URL = target
 			},
@@ -70,7 +73,6 @@ func main() {
 		mHandler := &mustacheHandler.MustacheHandler{}
 		mHandler.Handler(record[2], proxy)
 
-		re := regexp.MustCompile(record[0])
 		reHandler.Handler(re, mHandler)
 	}
 	f.Close()
