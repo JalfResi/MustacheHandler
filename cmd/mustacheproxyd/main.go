@@ -71,7 +71,7 @@ func main() {
 		}
 
 		mHandler := &mustacheHandler.MustacheHandler{}
-		mHandler.Handler(record[2], proxy)
+		mHandler.Handler(re, record[2], proxy)
 
 		reHandler.Handler(re, mHandler)
 	}

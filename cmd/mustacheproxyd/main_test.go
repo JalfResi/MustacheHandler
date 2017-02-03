@@ -19,7 +19,7 @@ func TestHandlers(t *testing.T) {
 
 	// Create a request to pass to our handler. We dont have any query parameters
 	// for now, so we'll pass 'nil' as the third parameter
-	req, err := http.NewRequest("GET", "/users", nil)
+	req, err := http.NewRequest("GET", "/users/hello", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,10 +44,11 @@ func TestHandlers(t *testing.T) {
 		},
 	}
 
-	mHandler := &mustacheHandler.MustacheHandler{}
-	mHandler.Handler("<html><body>{{message}}</body></html>", proxy)
+	re := regexp.MustCompile("/users/(.*)")
 
-	re := regexp.MustCompile("/users")
+	mHandler := &mustacheHandler.MustacheHandler{}
+	mHandler.Handler(re, "./templates/$1.mustache", proxy)
+
 	reHandler := &regexphandler.RegexpHandler{}
 	reHandler.Handler(re, mHandler)
 
